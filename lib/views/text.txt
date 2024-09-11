@@ -1,0 +1,140 @@
+NECESITO UNA VISTA FLUTTER CON LAS SIGUIENTES CARACTERISTICAS:
+NOMBRE: LoginView.
+LA PAGINA VA A TENER UN COLOR DE FONDO DE COLOR 0xFFEF4136
+NECESITOQUE TENGA UN ENCABEZADO DE COLOR BLANCO, CON UN BORDE REDONDEADO DE 20PX,
+EL BORDE REDONDEADO DEBE TENERLO SOLO EL BORDE DE ABAJO DEL ENCABEZADO, ESTE ENCABEZADO
+VA A TENER UN ALTO DE 580PX, DENTRO VA HABER UN ICONO DE UN CAMION DE CARGA, Y DEBAJO LA
+PALABRA 'VIAJE', EL ICONO Y  EL TEXTO VAN CON EL CODIGO DE COLOR: 0xFFEF4136.
+
+DESPUES NECESITO UN CONTENEDOR DE COLOR BLANCO QUE VA A TENER UN ANCHO DE 90% CON RESPECTO 
+AL ANCHO TOTAL DE LA PANTALLA, Y UN LEFT DE 5%, PARA QUE ESTE QUEDE CENTRADO, ADEMAS DEBE
+DE TENER UN ALTO AUTOMATICO, ES DECIR QUE DEPENDA DEL CONTENIDO DE ESTE. EL CONTENEDOR DEBE DE 
+QUEDAR EN MEDIO DE LA PANTALLA EN EL EJE Y
+
+DENTRO VA HABER DOS INPUTS CON UN BORDE REDONDEADO DE 20PX, UN ANCHO DE 90%, CON RESPECTO AL 
+ANCHO DEL CONTENEDOR, UN LEFT DE 5%, Y UN ALTO DE 25PX, EL FONDO VA SER DE COLOR grey[200],
+CADA UNO VA A TENER UN BUTTON DE 15PX, AMBOS TENFEAN DENTRO UN ICONO DE COLOR BLANCO Y CON 
+UN BORDE REDONDEADO DE 50%, Y ALADO UN PLACEHOLDER, EL PRIMERO DIRA 'USUARIO' Y EL ICONO VA A
+SER DE USER Y EL SEGUNDO VA A SER DE UN CANDADO Y EL PLACEHOLDER DIRA 'CONTRASEÑA'; EL 
+PRIMER INPUT VA A SER DE TEXTO Y EL SEGUNDOTAMBIEN PERO CON EL ATRIBUTO obscureText: true, PARA QUE
+LA CONTRASEÑA SE OCULTE. LOS INPUT VAN A TENER UN   border: InputBorder.none,
+
+DEBAJO VA HABER DOS ENLACES CON EL CODIGO DE COLOR 0xFF3685CD Y UNA FUENTE DE 10PX, ESTOS VAN A 
+ESTAR UNO ALADO DEL OTRO EL PRIMERO VA A DECIR 'RECORDARME' Y EL SEGUNDO 'OLVIDE MI CONTRASEÑA'
+A LA DERECHA DEL ENLACE QUE DICE 'RECORDARME', QUIERO QUE HAYA UN CHECKBOX DE 5PX X 5PX IGUAL CON EL BORDE
+DE COLOR 0xFF3685CD.
+
+DEBAJO A 10PX VA HABER UN BORTON CON EL CODIGO DE COLOR 0xFFEF4136 CON UN ANCHO DE 90% CON RESPECTO AL CONTENEDOR
+QUE DIGA 'ENTRAR'
+
+
+
+
+Para almacenar la inspección del vehículo 
+en una base de datos MySQL, necesitas crear una 
+tabla que capture tanto la información general de la
+ inspección como los detalles específicos de cada ítem 
+ inspeccionado. Aquí te propongo un diseño básico:
+1. Tabla inspecciones
+
+    Esta tabla almacenará la información general de cada 
+    inspección, como la fecha, el ID del vehículo, el ID del 
+    conductor, y el estado final de la inspección.
+
+sql
+
+CREATE TABLE inspecciones (
+    id_inspeccion INT AUTO_INCREMENT PRIMARY KEY,
+    id_vehiculo INT NOT NULL,
+    id_conductor INT NOT NULL,
+    fecha_inspeccion DATETIME NOT NULL,
+    estado_inspeccion VARCHAR(50) NOT NULL,
+    comentarios TEXT,
+    FOREIGN KEY (id_vehiculo) REFERENCES vehiculos(id_vehiculo),
+    FOREIGN KEY (id_conductor) REFERENCES conductores(id_conductor)
+);
+
+2. Tabla detalles_inspeccion
+
+    Esta tabla almacenará los resultados de cada ítem inspeccionado, 
+    incluyendo si pasó o no la inspección y, en caso de ser necesario, 
+    la ruta de la foto como evidencia.
+
+sql
+
+CREATE TABLE detalles_inspeccion (
+    id_detalle INT AUTO_INCREMENT PRIMARY KEY,
+    id_inspeccion INT NOT NULL,
+    item VARCHAR(255) NOT NULL,
+    aprobado BOOLEAN NOT NULL,
+    foto_evidencia VARCHAR(255),
+    comentarios TEXT,
+    FOREIGN KEY (id_inspeccion) REFERENCES inspecciones(id_inspeccion)
+);
+
+3. Tabla vehiculos
+
+    Si aún no tienes una tabla para los vehículos, puedes 
+    crear una tabla básica para almacenar la información del vehículo.
+
+sql
+
+CREATE TABLE vehiculos (
+    id_vehiculo INT AUTO_INCREMENT PRIMARY KEY,
+    identificacion_vehiculo VARCHAR(50) NOT NULL,
+    matricula VARCHAR(50) NOT NULL,
+    modelo VARCHAR(50),
+    marca VARCHAR(50),
+    anio INT
+);
+
+4. Tabla conductores
+
+    Si tampoco tienes una tabla para los conductores, aquí tienes un ejemplo básico.
+
+sql
+
+CREATE TABLE conductores (
+    id_conductor INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100),
+    licencia VARCHAR(50) UNIQUE,
+    telefono VARCHAR(20),
+    correo VARCHAR(100) UNIQUE
+);
+
+Ejemplo de Inserción de Datos
+
+Para realizar una inserción completa en estas tablas tras una inspección:
+
+sql
+
+-- Inserción en la tabla inspecciones
+INSERT INTO inspecciones (id_vehiculo, id_conductor, fecha_inspeccion, estado_inspeccion, comentarios)
+VALUES (1, 1, NOW(), 'Completada', 'Inspección realizada sin problemas.');
+
+-- Obtener el último id de la inspección
+SET @last_inspeccion_id = LAST_INSERT_ID();
+
+-- Inserción en la tabla detalles_inspeccion
+INSERT INTO detalles_inspeccion (id_inspeccion, item, aprobado, foto_evidencia, comentarios)
+VALUES 
+(@last_inspeccion_id, 'Identificación del vehículo', TRUE, NULL, 'Todo en orden'),
+(@last_inspeccion_id, 'Matrícula', TRUE, NULL, 'Todo en orden'),
+(@last_inspeccion_id, 'Kilometraje', TRUE, NULL, 'Todo en orden'),
+(@last_inspeccion_id, 'Frenos de servicio', FALSE, 'ruta/a/foto.jpg', 'Desgaste en los frenos');
+
+Explicación:
+
+    Tabla inspecciones: Captura la información general sobre la 
+    inspección, como el vehículo y el conductor involucrados, la 
+    fecha de la inspección, y el estado final.
+    Tabla detalles_inspeccion: Cada registro en esta tabla corresponde
+     a un ítem de la lista de inspección. Se almacena si fue aprobado o
+      no, y opcionalmente, una foto como evidencia.
+    Relaciones: Las tablas vehiculos y conductores se relacionan con la
+     tabla inspecciones para proporcionar información completa sobre el
+      vehículo inspeccionado y el conductor que realizó la inspección.
+
+Este diseño te permite almacenar todas las inspecciones y sus detalles 
+en un formato estructurado, fácil de consultar y auditar.
