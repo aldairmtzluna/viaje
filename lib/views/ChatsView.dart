@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
-import 'package:intl/intl.dart'; // Añadir este paquete para el formato de fechas
+import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -112,7 +112,7 @@ class ChatMessages extends StatelessWidget {
 
       await Future.delayed(Duration(
           seconds:
-              2)); // Aquí puedes mantener el delay si no tienes WebSockets.
+              2)); 
     }
   }
 
@@ -120,7 +120,7 @@ class ChatMessages extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _fetchMessages(
-          user['id_usuario'], currentUserId), // Pasa ambos argumentos aquí
+          user['id_usuario'], currentUserId), 
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -159,8 +159,8 @@ class ChatMessages extends StatelessWidget {
                       isDeletedForAll: isDeletedForAll,
                       isMessageActive: isMessageActive,
                       timestamp: DateTime.parse(message[
-                          'fecha_creacion_mensaje']), // Convertir String a DateTime
-                      attachment: message['adjuntos_mensaje'], // Add this line
+                          'fecha_creacion_mensaje']), 
+                      attachment: message['adjuntos_mensaje'], 
                     );
                   }).toList(),
                 ],
@@ -177,7 +177,6 @@ class ChatMessages extends StatelessWidget {
     Map<String, List<Map<String, dynamic>>> groupedMessages = {};
 
     for (var message in messages) {
-      // Asegúrate de convertir el string a DateTime
       DateTime dateTime = DateTime.parse(message['fecha_creacion_mensaje']);
       String formattedDate = _formatDate(dateTime);
 
@@ -282,7 +281,6 @@ class _InputBarState extends State<InputBar> {
   }
 
   Future<void> _sendFile(File file) async {
-    // Aquí puedes implementar el envío de archivos, guardando la ruta en la base de datos
     await _sendMessage(attachmentPath: file.path);
   }
 
@@ -663,10 +661,10 @@ class MessageWidget extends StatelessWidget {
           width: 200, height: 200, fit: BoxFit.cover);
     } else if (attachment!.endsWith('.mp4')) {
       return Text(
-          'Video adjunto'); // Aquí puedes agregar un reproductor de video
+          'Video adjunto'); 
     } else if (attachment!.endsWith('.aac')) {
       return Text(
-          'Audio adjunto'); // Aquí puedes agregar un reproductor de audio
+          'Audio adjunto')
     } else {
       return Text('Archivo adjunto');
     }
