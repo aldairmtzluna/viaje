@@ -33,29 +33,21 @@ try {
                 exit();
          }
         case 'POST':
-            // Manejar la subida de fotos
-            if ($segments[0] == 'upload_photo') {
-                $targetDir = "uploads/";
-                $targetFile = $targetDir . basename($_FILES["photo"]["name"]);
-                move_uploaded_file($_FILES["photo"]["tmp_name"], $targetFile);
+            $data = json_decode(file_get_contents('php://input'), true);
 
-                echo json_encode(['photo_url' => $targetFile]);
-                exit();
-            }
-
-            // Manejar detalles de inspección
-            if (isset($data['id_inspeccion_detalle']) && isset($data['item_detalle']) && isset($data['aprobado_detalle'])) {
+            if (isset($data['id_inspeccion_detalle']) && isset($data['item_detalle']) && isset($data['aprobado_detalle']) && isset($data['foto_evidencia_detalle']) && isset($data['comentarios_detalle'])) {
+                
                 $stmt = $pdo->prepare("INSERT INTO detalles_inspeccion (id_inspeccion_detalle, item_detalle, aprobado_detalle, foto_evidencia_detalle, comentarios_detalle, fecha_creacion_detalle, fecha_modificacion_detalle) VALUES (?, ?, ?, ?, ?, NOW(), NULL)");
+
                 $stmt->execute([
                     $data['id_inspeccion_detalle'],
                     $data['item_detalle'],
                     $data['aprobado_detalle'],
                     $data['foto_evidencia_detalle'],
-                    $data['comentarios_detalle'],
-                    $data['inspeccion_detalle']
+                    $data['comentarios_detalle']
                 ]);
 
-                echo json_encode(['message' => 'Detalle de inspección creado']);
+                echo json_encode(['message' => 'Detalle de inspección creada']);
                 exit();
             } else {
                 header("HTTP/1.1 400 Bad Request");
