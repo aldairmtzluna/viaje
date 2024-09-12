@@ -110,17 +110,14 @@ class ChatMessages extends StatelessWidget {
         print('Error: $e');
       }
 
-      await Future.delayed(Duration(
-          seconds:
-              2)); 
+      await Future.delayed(Duration(seconds: 2));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: _fetchMessages(
-          user['id_usuario'], currentUserId), 
+      stream: _fetchMessages(user['id_usuario'], currentUserId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -158,9 +155,9 @@ class ChatMessages extends StatelessWidget {
                       currentUserId: currentUserId,
                       isDeletedForAll: isDeletedForAll,
                       isMessageActive: isMessageActive,
-                      timestamp: DateTime.parse(message[
-                          'fecha_creacion_mensaje']), 
-                      attachment: message['adjuntos_mensaje'], 
+                      timestamp:
+                          DateTime.parse(message['fecha_creacion_mensaje']),
+                      attachment: message['adjuntos_mensaje'],
                     );
                   }).toList(),
                 ],
@@ -660,11 +657,9 @@ class MessageWidget extends StatelessWidget {
       return Image.file(File(attachment!),
           width: 200, height: 200, fit: BoxFit.cover);
     } else if (attachment!.endsWith('.mp4')) {
-      return Text(
-          'Video adjunto'); 
+      return Text('Video adjunto');
     } else if (attachment!.endsWith('.aac')) {
-      return Text(
-          'Audio adjunto')
+      return Text('Audio adjunto');
     } else {
       return Text('Archivo adjunto');
     }
