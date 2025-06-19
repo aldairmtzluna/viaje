@@ -38,7 +38,7 @@ class _HomeViewState extends State<HomeView> {
   Future<void> _loadUserName() async {
     try {
       final response = await http.get(Uri.parse(
-          'https://whitesmoke-magpie-578690.hostingersite.com/index.php/usuarios?id_usuario=${widget.userId}'));
+          'http://192.168.1.72/api/usuarios?id_usuario=${widget.userId}'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -59,7 +59,7 @@ class _HomeViewState extends State<HomeView> {
   Future<void> _loadUnitNumber() async {
     try {
       final response = await http.get(Uri.parse(
-          'https://whitesmoke-magpie-578690.hostingersite.com/index.php/unidades?id_conductor_unidad=${widget.userId}'));
+          'http://192.168.1.72/api/unidades?id_conductor_unidad=${widget.userId}'));
 
       if (response.statusCode == 200) {
         final dataUnit = json.decode(response.body);

@@ -315,7 +315,10 @@ class _CalculatorBViewState extends State<CalculatorBView> {
                 child: Center(
                   child: Text(
                     'Calcular',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white, // Se agrega el color blanco
+                    ),
                   ),
                 ),
               ),

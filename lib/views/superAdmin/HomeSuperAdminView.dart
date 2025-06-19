@@ -5,6 +5,7 @@ import '../ResetPasswordView.dart';
 import 'DriverRegisterView.dart';
 import '../admin/RegisterFleetView.dart';
 import '../admin/FuelCalculatorView.dart';
+import 'AdminRegisterView.dart';
 
 class HomeSuperAdminView extends StatelessWidget {
   final int userId;
@@ -63,7 +64,7 @@ class HomeSuperAdminView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Color(0xFFEF4136),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
+          icon: Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -138,7 +139,7 @@ class HomeSuperAdminView extends StatelessWidget {
                           margin: EdgeInsets.only(
                               left: MediaQuery.of(context).size.width * 0.015),
                           decoration: BoxDecoration(
-                            color: Color(0xFFBFFF00),
+                            color: Color.fromARGB(255, 255, 238, 0),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: InkWell(
@@ -147,7 +148,7 @@ class HomeSuperAdminView extends StatelessWidget {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) =>
-                                        DriverRegisterView(userId: userId)),
+                                        AdminRegisterView(userId: userId)),
                               );
                             },
                             child: Column(

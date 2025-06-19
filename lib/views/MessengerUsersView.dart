@@ -39,7 +39,7 @@ class _MessengerUsersViewState extends State<MessengerUsersView> {
 
   Future<List<Map<String, dynamic>>> _fetchMessagedUsers() async {
     final response = await http.get(Uri.parse(
-        'https://whitesmoke-magpie-578690.hostingersite.com/index.php/usuarios/involucrados?id_usuario=${widget.userId}'));
+        'http://192.168.1.72/api/usuarios/involucrados?id_usuario=${widget.userId}'));
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
@@ -48,8 +48,10 @@ class _MessengerUsersViewState extends State<MessengerUsersView> {
           'id_usuario': user['id_usuario'],
           'nombre_usuario': user['nombre_usuario'],
           'apellido_paterno_usuario': user['apellido_paterno_usuario'],
-          'rol_usuario': user['rol_usuario'],
-          'genero_usuario': user['genero_usuario'],
+          'rol_usuario': int.tryParse(user['rol_usuario'].toString()) ??
+              0, // Convierte rol_usuario a int
+          'genero_usuario': int.tryParse(user['genero_usuario'].toString()) ??
+              0, // Convierte genero_usuario a int
           'nombre_inicial': user['nombre_inicial'],
           'apellido_inicial': user['apellido_inicial'],
         };
@@ -61,7 +63,7 @@ class _MessengerUsersViewState extends State<MessengerUsersView> {
 
   Future<List<Map<String, dynamic>>> _fetchAllUsers() async {
     final response = await http.get(Uri.parse(
-        'https://whitesmoke-magpie-578690.hostingersite.com/index.php/usuarios/excepto?id_usuario=${widget.userId}'));
+        'http://192.168.1.72/api/usuarios/excepto?id_usuario=${widget.userId}'));
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
@@ -70,8 +72,10 @@ class _MessengerUsersViewState extends State<MessengerUsersView> {
           'id_usuario': user['id_usuario'],
           'nombre_usuario': user['nombre_usuario'],
           'apellido_paterno_usuario': user['apellido_paterno_usuario'],
-          'rol_usuario': user['rol_usuario'],
-          'genero_usuario': user['genero_usuario'],
+          'rol_usuario': int.tryParse(user['rol_usuario'].toString()) ??
+              0, // Convierte rol_usuario a int
+          'genero_usuario': int.tryParse(user['genero_usuario'].toString()) ??
+              0, // Convierte genero_usuario a int
           'nombre_inicial': user['nombre_inicial'],
           'apellido_inicial': user['apellido_inicial'],
         };
@@ -159,7 +163,10 @@ class _MessengerUsersViewState extends State<MessengerUsersView> {
                         ),
                       ),
                       Text(
-                        _getRole(user['rol_usuario'], user['genero_usuario']),
+                        _getRole(
+                          user['rol_usuario'], // rol_usuario ahora es int
+                          user['genero_usuario'], // genero_usuario ahora es int
+                        ),
                         style: TextStyle(
                           color: Colors.black54,
                           fontSize: 12,

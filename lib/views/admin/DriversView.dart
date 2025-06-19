@@ -26,7 +26,7 @@ class _DriversviewState extends State<Driversview> {
   void fetchConductores() async {
     // URL de la API
     final url =
-        'https://whitesmoke-magpie-578690.hostingersite.com/index.php/conductores?id_usuario_pertenece_conductor=${widget.userId}';
+        'http://192.168.1.72/api/conductores?id_usuario_pertenece_conductor=${widget.userId}';
 
     try {
       // Realizar la solicitud GET a la API

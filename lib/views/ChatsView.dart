@@ -7,8 +7,6 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
-import 'dart:convert';
 
 class ChatsView extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -88,7 +86,7 @@ class ChatMessages extends StatelessWidget {
     while (true) {
       try {
         final url =
-            'https://whitesmoke-magpie-578690.hostingersite.com/index.php/mensajes?usuario_uno=$currentUserId&usuario_dos=$userId';
+            'http://192.168.1.72/api/mensajes?usuario_uno=$currentUserId&usuario_dos=$userId';
         final response = await http.get(Uri.parse(url));
 
         if (response.statusCode == 200) {
@@ -117,7 +115,7 @@ class ChatMessages extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: _fetchMessages(user['id_usuario'], currentUserId),
+      stream: _fetchMessages(int.parse(user['id_usuario']), currentUserId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -143,7 +141,8 @@ class ChatMessages extends StatelessWidget {
                   _buildDateHeader(dateKey),
                   ...dailyMessages.map((message) {
                     bool isSender =
-                        message['id_remitente_mensaje'] == currentUserId;
+                        message['id_remitente_mensaje'].toString() ==
+                            currentUserId.toString();
                     bool isDeletedForAll =
                         message['contenido_mensaje'] == 'Mensaje eliminado';
                     bool isMessageActive =
@@ -151,7 +150,7 @@ class ChatMessages extends StatelessWidget {
                     return MessageWidget(
                       message: message['contenido_mensaje'],
                       isSender: isSender,
-                      messageId: message['id_mensaje'],
+                      messageId: int.parse(message['id_mensaje']),
                       currentUserId: currentUserId,
                       isDeletedForAll: isDeletedForAll,
                       isMessageActive: isMessageActive,
@@ -250,8 +249,7 @@ class _InputBarState extends State<InputBar> {
     String messageContent = _messageController.text.trim();
     if (messageContent.isEmpty && attachmentPath == null) return;
 
-    final url =
-        'https://whitesmoke-magpie-578690.hostingersite.com/index.php/mensajes';
+    final url = 'http://192.168.1.72/api/mensajes';
 
     try {
       final response = await http.post(
@@ -292,42 +290,8 @@ class _InputBarState extends State<InputBar> {
     }
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _selectedFile = File(pickedFile.path);
-      });
-      await _sendFile(_selectedFile!);
-    }
-  }
-
-  Future<void> _pickVideo() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickVideo(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _selectedFile = File(pickedFile.path);
-      });
-      await _sendFile(_selectedFile!);
-    }
-  }
-
-  Future<void> _recordVoice() async {
-    if (_isRecording) {
-      _stopRecording();
-    } else {
-      _startRecording();
-    }
-  }
-
   Future<void> _startRecording() async {
-    await _recorder.startRecorder(
-      toFile: 'voice_message.aac',
-    );
+    await _recorder.startRecorder();
     setState(() {
       _isRecording = true;
     });
@@ -338,38 +302,18 @@ class _InputBarState extends State<InputBar> {
     setState(() {
       _isRecording = false;
     });
-    if (path != null) {
-      setState(() {
-        _selectedFile = File(path);
-      });
-      await _sendFile(_selectedFile!);
-    }
+    await _sendFile(File(path!));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 80,
-      width: MediaQuery.of(context).size.width,
-      padding: EdgeInsets.symmetric(horizontal: 10),
-      color: Colors.grey[200],
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.attach_file),
-            onPressed: _pickFile,
-          ),
-          IconButton(
-            icon: Icon(Icons.photo),
-            onPressed: _pickImage,
-          ),
-          IconButton(
-            icon: Icon(Icons.videocam),
-            onPressed: _pickVideo,
-          ),
-          IconButton(
-            icon: Icon(_isRecording ? Icons.mic_off : Icons.mic),
-            onPressed: _recordVoice,
+            icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+            onPressed: _isRecording ? _stopRecording : _startRecording,
           ),
           Expanded(
             child: TextField(
@@ -377,12 +321,18 @@ class _InputBarState extends State<InputBar> {
               decoration: InputDecoration(
                 hintText: 'Escribe un mensaje...',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide(color: Colors.grey),
                 ),
+                filled: true,
+                fillColor: Colors.white,
               ),
             ),
           ),
-          SizedBox(width: 8),
+          IconButton(
+            icon: Icon(Icons.attach_file),
+            onPressed: _pickFile,
+          ),
           IconButton(
             icon: Icon(Icons.send),
             onPressed: () => _sendMessage(),
@@ -401,7 +351,7 @@ class MessageWidget extends StatelessWidget {
   final bool isDeletedForAll;
   final bool isMessageActive;
   final DateTime timestamp;
-  final String? attachment; // Add this line
+  final String? attachment;
 
   const MessageWidget({
     Key? key,
@@ -412,72 +362,8 @@ class MessageWidget extends StatelessWidget {
     required this.isDeletedForAll,
     required this.isMessageActive,
     required this.timestamp,
-    this.attachment, // Add this line
+    this.attachment,
   }) : super(key: key);
-
-  Future<void> _editMessage(BuildContext context) async {
-    final TextEditingController _editController = TextEditingController();
-    _editController.text = message;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Editar mensaje'),
-        content: TextField(
-          controller: _editController,
-          decoration: InputDecoration(
-            hintText: 'Escribe tu mensaje...',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancelar',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFFEF4136),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              String editedMessage = _editController.text.trim();
-              if (editedMessage.isNotEmpty) {
-                final url =
-                    'https://whitesmoke-magpie-578690.hostingersite.com/index.php/mensajes';
-                try {
-                  final response = await http.put(
-                    Uri.parse(url),
-                    body: json.encode({
-                      'id_mensaje': messageId,
-                      'contenido_mensaje': editedMessage,
-                    }),
-                    headers: {'Content-Type': 'application/json'},
-                  );
-
-                  if (response.statusCode == 200) {
-                    Navigator.pop(context);
-                  } else {
-                    print('Failed to edit message: ${response.body}');
-                  }
-                } catch (e) {
-                  print('Error editing message: $e');
-                }
-              }
-            },
-            child: Text(
-              'Guardar',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFFEF4136),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Future<void> _deleteMessageForAll(BuildContext context) async {
     bool confirmDelete = await showDialog(
@@ -512,8 +398,7 @@ class MessageWidget extends StatelessWidget {
     );
 
     if (confirmDelete) {
-      final url =
-          'https://whitesmoke-magpie-578690.hostingersite.com/index.php/mensajes';
+      final url = 'http://192.168.1.72/api/mensajes';
       try {
         final response = await http.put(
           Uri.parse(url),
@@ -534,8 +419,8 @@ class MessageWidget extends StatelessWidget {
   }
 
   Future<void> _deleteMessageForMe(int messageId) async {
-    final url = Uri.parse(
-        'https://whitesmoke-magpie-578690.hostingersite.com/index.php/mensajes?id_mensaje=$messageId');
+    final url =
+        Uri.parse('http://192.168.1.72/api/mensajes?id_mensaje=$messageId');
 
     try {
       final response = await http.delete(url);
@@ -549,6 +434,59 @@ class MessageWidget extends StatelessWidget {
       }
     } catch (e) {
       print('Error deleting message for me: $e');
+    }
+  }
+
+  Future<void> _editMessage(BuildContext context) async {
+    final TextEditingController _editController =
+        TextEditingController(text: message);
+
+    bool isEdited = await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Editar Mensaje'),
+          content: TextField(
+            controller: _editController,
+            decoration: InputDecoration(hintText: 'Escribe tu mensaje...'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (isEdited) {
+      final String newMessage = _editController.text.trim();
+      if (newMessage.isNotEmpty) {
+        final url = 'http://192.168.1.72/api/mensajes';
+        try {
+          final response = await http.put(
+            Uri.parse(url),
+            body: json.encode({
+              'id_mensaje': messageId,
+              'contenido_mensaje': newMessage,
+            }),
+            headers: {'Content-Type': 'application/json'},
+          );
+
+          if (response.statusCode == 200) {
+            print('Mensaje editado exitosamente');
+          } else {
+            print('Error al editar el mensaje: ${response.statusCode}');
+          }
+        } catch (e) {
+          print('Error al editar el mensaje: $e');
+        }
+      }
     }
   }
 

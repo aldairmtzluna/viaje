@@ -60,54 +60,124 @@ class _CarScannerViewState extends State<CarScannerView> {
   }
 
   Future<void> _submitInspection() async {
-    bool allChecked = checklistStatus.values.every((status) => status);
+    try {
+      bool allChecked = checklistStatus.values.every((status) => status);
 
-    if (allChecked) {
-      // Crear inspección
-      final inspectionResponse = await http.post(
-        Uri.parse(
-            'https://whitesmoke-magpie-578690.hostingersite.com/index.php/inspecciones'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'estado_inspeccion': 'Completada',
-          'id_unidad_inspeccion': 1, // Cambia esto por el ID real de la unidad
-          'id_conductor_inspeccion': widget.userId,
-        }),
-      );
+      if (allChecked) {
+        // Primero, realiza la solicitud GET para obtener el id_unidad
+        final unitsResponse = await http.get(
+          Uri.parse(
+              'http://192.168.1.72/api/unidades?id_usuario_unidad=${widget.userId}'),
+          headers: {'Content-Type': 'application/json'},
+        );
 
-      if (inspectionResponse.statusCode == 200) {
-        final inspectionId =
-            jsonDecode(inspectionResponse.body)['id_inspeccion'];
+        if (unitsResponse.statusCode == 200) {
+          final List<dynamic> unitsData = jsonDecode(unitsResponse.body);
 
-        // Insertar detalles de inspección
-        for (var item in checklistItems) {
-          final isApproved = checklistStatus[item] == true ? 1 : 0;
-          final photoPath = photoEvidence[item];
-          final photoBase64 = photoPath != null
-              ? base64Encode(photoPath.readAsBytesSync())
-              : '';
+          if (unitsData.isNotEmpty) {
+            // Asegúrate de que `id_unidad` se convierte a int si es necesario
+            final int idUnidad =
+                int.parse(unitsData[0]['id_unidad'].toString());
 
-          await http.post(
-            Uri.parse(
-                'https://whitesmoke-magpie-578690.hostingersite.com/index.php/detalles_inspeccion'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'id_inspeccion_detalle': inspectionId,
-              'item_detalle': item,
-              'aprobado_detalle': isApproved,
-              'foto_evidencia_detalle': photoBase64,
-              'comentarios_detalle': isApproved == 0 ? 'Requiere revisión' : '',
-            }),
-          );
+            final inspectionData = {
+              'estado_inspeccion': 'Completada',
+              'id_unidad_inspeccion': idUnidad,
+              'id_usuario_inspeccion': widget.userId,
+            };
+
+            // Enviar datos de la inspección
+            final inspectionResponse = await http.post(
+              Uri.parse('http://192.168.1.72/api/inspecciones'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode(inspectionData),
+            );
+
+            // Imprimir la respuesta completa para depuración
+            print(
+                "Respuesta del servidor (inspección): ${inspectionResponse.body}");
+
+            if (inspectionResponse.statusCode == 200) {
+              final responseBody = jsonDecode(inspectionResponse.body);
+
+              // Obtener el valor de id_inspeccion_incrementado
+              final incrementedResponse = await http.get(
+                Uri.parse('http://192.168.1.72/api/inspecciones/incrementado'),
+                headers: {'Content-Type': 'application/json'},
+              );
+
+              if (incrementedResponse.statusCode == 200) {
+                final incrementedData = jsonDecode(incrementedResponse.body);
+                var idInspeccionIncrementado =
+                    incrementedData['id_inspeccion_incrementado'];
+
+                // Asegurarse de que sea de tipo entero
+                if (idInspeccionIncrementado is String) {
+                  idInspeccionIncrementado =
+                      int.parse(idInspeccionIncrementado);
+                } else if (idInspeccionIncrementado is! int) {
+                  throw Exception(
+                      'Unexpected type for id_inspeccion_incrementado');
+                }
+
+                // Insertar detalles de inspección
+                for (var item in checklistItems) {
+                  final isApproved = checklistStatus[item] == true ? 1 : 0;
+                  final photoPath = photoEvidence[item];
+                  final photoBase64 = photoPath != null
+                      ? base64Encode(photoPath.readAsBytesSync())
+                      : '';
+
+                  final detailData = {
+                    'id_inspeccion_detalle':
+                        idInspeccionIncrementado, // Aquí se usa el valor incrementado
+                    'item_detalle': item,
+                    'aprobado_detalle': isApproved,
+                    'foto_evidencia_detalle': photoBase64,
+                    'comentarios_detalle':
+                        isApproved == 0 ? 'Requiere revisión' : '',
+                  };
+
+                  print("Enviando detalle de inspección para $item:");
+                  print(jsonEncode(detailData)); // Imprime el JSON enviado
+
+                  final detailResponse = await http.post(
+                    Uri.parse('http://192.168.1.72/api/detalles_inspeccion'),
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode(detailData),
+                  );
+
+                  print(
+                      "Respuesta del servidor (detalle): ${detailResponse.body}"); // Imprime la respuesta del servidor
+
+                  if (detailResponse.statusCode != 200) {
+                    _showMessage(
+                        'Error en el detalle del ítem: $item. Código: ${detailResponse.statusCode}, Mensaje: ${detailResponse.body}');
+                    return; // Detener el proceso si hay un error en algún detalle
+                  }
+                }
+
+                _showMessage('¡Inspección completada con éxito!');
+              } else {
+                _showMessage(
+                    'Error al obtener id_inspeccion_incrementado. Código: ${incrementedResponse.statusCode}, Mensaje: ${incrementedResponse.body}');
+              }
+            } else {
+              _showMessage(
+                  'Error al completar la inspección. Código: ${inspectionResponse.statusCode}, Mensaje: ${inspectionResponse.body}');
+            }
+          } else {
+            _showMessage('No se encontraron unidades para el usuario.');
+          }
+        } else {
+          _showMessage(
+              'Error al obtener las unidades. Código: ${unitsResponse.statusCode}, Mensaje: ${unitsResponse.body}');
         }
-
-        _showMessage('¡Inspección completada con éxito!');
       } else {
-        _showMessage('Error al completar la inspección. Inténtalo nuevamente.');
+        _showMessage(
+            'Asegúrate de que todos los aspectos de tu vehículo están bien, si no es así sube una foto del estado de tu vehículo');
       }
-    } else {
-      _showMessage(
-          'Asegúrate de que todos los aspectos de tu vehículo están bien, si no es así sube una foto del estado de tu vehículo');
+    } catch (e) {
+      _showMessage('Ocurrió un error inesperado: $e');
     }
   }
 

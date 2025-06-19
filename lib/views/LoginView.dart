@@ -28,8 +28,7 @@ class _LoginViewState extends State<LoginView> {
     } else {
       try {
         final response = await http.post(
-          Uri.parse(
-              'https://whitesmoke-magpie-578690.hostingersite.com/index.php/login'),
+          Uri.parse('http://192.168.1.72/api/login'),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
           },
@@ -42,9 +41,13 @@ class _LoginViewState extends State<LoginView> {
         if (response.statusCode == 200) {
           final Map<String, dynamic> responseBody = jsonDecode(response.body);
 
+          // Imprimir el cuerpo de la respuesta para verificar los datos recibidos
+          print(responseBody);
+
           if (responseBody.containsKey('id_usuario')) {
-            int userId = responseBody['id_usuario'];
-            int rol = responseBody['rol_usuario'];
+            // Conversión explícita de los valores a enteros
+            int userId = int.parse(responseBody['id_usuario'].toString());
+            int rol = int.parse(responseBody['rol_usuario'].toString());
 
             // Guardar el estado de sesión en SharedPreferences
             SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -235,8 +238,7 @@ class _LoginViewState extends State<LoginView> {
                           'Entrar',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors
-                                .white, // Cambia el color del texto a blanco
+                            color: Colors.white,
                           ),
                         ),
                       ),
